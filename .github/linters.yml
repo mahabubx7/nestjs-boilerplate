@@ -1,0 +1,32 @@
+name: Linters
+
+on:
+  push
+  # - pull_request
+
+env:
+  FORCE_COLOR: 1
+
+jobs:
+  eslint:
+    name: Eslint checks
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: '18.x'
+      - name: Setup Eslint and Prettier
+        run: |
+          npm install -g pnpm && pnpm install
+          [ -f .eslintrc.js ]
+      - name: Lint Report
+        run: pnpx eslint '{src,apps,libs,test}/**/*.ts'
+  nodechecker:
+    name: node_modules checker
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v3
+      - name: Check node_modules existence
+        run: |
+          if [ -d "node_modules/" ]; then echo -e "\e[1;31mThe node_modules/ folder was pushed to the repo. Please remove it from the GitHub repository and try again."; echo -e "\e[1;32mYou can set up a .gitignore file with this folder included on it to prevent this from happening in the future." && exit 1; fi
