@@ -15,7 +15,7 @@ export class UserService {
   }
 
   async login(loginDto: LoginDto) {
-    const user = await this.findByEmail(loginDto.email);
+    const user = await this.userRepo.findOne({ where: { email: loginDto.email } });
     if (!user) {
       throw new HttpException('User not found on this email id', HttpStatus.NOT_FOUND);
     }
@@ -23,15 +23,31 @@ export class UserService {
     if (!verifiedUser) {
       throw new HttpException('Invalid credentials', HttpStatus.NOT_FOUND);
     }
-    user.password = null;
+    delete user.password;
     return user;
   }
 
-  async findOne(userId: number) {
-    return await this.userRepo.findOne({ where: { id: userId } });
+  async findOne(id: number) {
+    return await this.userRepo.findOne({
+      where: { id },
+      select: ['id', 'email', 'name', 'createdAt', 'updatedAt'],
+    });
   }
 
   async findByEmail(email: string) {
-    return await this.userRepo.findOne({ where: { email } });
+    return await this.userRepo.findOne({
+      where: { email },
+      select: ['id', 'email', 'name', 'createdAt', 'updatedAt'],
+    });
+  }
+
+  async getUserInfo(id: number) {
+    return await this.userRepo.findOne({
+      where: { id },
+      select: ['id', 'email', 'name', 'createdAt', 'updatedAt'],
+      relations: {
+        roles: true,
+      },
+    });
   }
 }

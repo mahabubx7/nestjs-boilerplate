@@ -2,10 +2,8 @@ import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { UserService } from '../users/user.service';
 import { JwtService } from '@nestjs/jwt';
 import { CreateUserDto, LoginDto } from '../users/dto';
-
-interface TokenPayload {
-  userId: number;
-}
+import { TokenPayload } from './types';
+import { envVars } from 'src/config';
 
 @Injectable()
 export class AuthService {
@@ -27,20 +25,25 @@ export class AuthService {
   public async login(loginDto: LoginDto) {
     try {
       const user = await this.userService.login(loginDto);
-      delete user.password;
       return user;
     } catch (err) {
       throw new HttpException(err.message, HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
-  public getCookieWithJwtToken(userId: number) {
-    const payLoad: TokenPayload = { userId };
-    const token = this.jwtService.sign(payLoad);
-    return token;
+  public async signJwt(payload: TokenPayload) {
+    return await this.jwtService.signAsync(payload, { secret: envVars.secret.jwt });
   }
 
   public async verifyJwt(token: string) {
-    return await this.jwtService.verifyAsync(token);
+    const parsed = await this.jwtService.verifyAsync(token, {
+      secret: envVars.secret.jwt,
+    });
+
+    if (!parsed.id || !parsed.email) {
+      throw new HttpException('Jwt data broken', HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+    const info = await this.userService.getUserInfo(parsed.id);
+    return info;
   }
 }

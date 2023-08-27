@@ -20,7 +20,7 @@ export class User {
   @Column()
   name: string;
 
-  @Column()
+  @Column({ unique: true })
   email: string;
 
   @Column()
@@ -28,7 +28,7 @@ export class User {
   password: string;
 
   @ManyToOne(() => Roles, (roles: Roles) => roles.id)
-  roles: Roles;
+  roles: Roles[];
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;

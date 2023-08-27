@@ -1,47 +1,28 @@
 import { Request as RequestType } from 'express';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
-import { Injectable, UnauthorizedException } from '@nestjs/common';
-import { AuthService } from './auth.service';
-// interface TokenPayload {
-//   userId: number;
-// }
+import { Injectable } from '@nestjs/common';
+import { TokenPayload } from './types';
+import { envVars } from 'src/config';
+
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
-  constructor(private readonly authService: AuthService) {
+  constructor() {
     super({
       ignoreExpiration: false,
-      secretOrKey: 'My random secret key never let others',
-      jwtFromRequest: ExtractJwt.fromExtractors([
-        (request: RequestType) => {
-          const data = request?.cookies['jwt_token'];
-          if (!data) {
-            return null;
-          }
-          return data;
-        },
-      ]),
+      secretOrKey: envVars.secret.jwt,
+      jwtFromRequest: ExtractJwt.fromExtractors([JwtStrategy.extractJWT]), // ExtractJwt.fromAuthHeaderAsBearerToken()
     });
   }
 
-  // private static extractJWT(req: RequestType): string | null {
-  //   if (req.cookies && 'Authentication' in req.cookies && req.cookies.Authentication.length > 0) {
-  //     return req.cookies.Authentication;
-  //   }
-
-  //   return null;
-  // }
-
-  async validate(payload: any) {
-    if (payload === null) {
-      throw new UnauthorizedException();
+  private static extractJWT(req: RequestType): string | null {
+    if (req.cookies && 'jwt_token' in req.cookies) {
+      return req.cookies.jwt_token;
     }
+    return null;
+  }
 
-    const verify = await this.authService.verifyJwt(payload);
-    if (!verify) {
-      throw new UnauthorizedException('Corrupted or expired JWT token');
-    }
-
+  async validate(payload: TokenPayload) {
     return payload;
   }
 }
