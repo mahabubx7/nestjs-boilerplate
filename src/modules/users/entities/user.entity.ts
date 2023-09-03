@@ -1,4 +1,3 @@
-import { Exclude } from 'class-transformer';
 import { passwordHelper } from 'src/common/helper';
 import {
   BeforeInsert,
@@ -6,11 +5,9 @@ import {
   Column,
   CreateDateColumn,
   Entity,
-  ManyToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
-import { Roles } from '../../roles/role.entity';
 
 @Entity({ name: 'users' })
 export class User {
@@ -24,11 +21,7 @@ export class User {
   email: string;
 
   @Column()
-  @Exclude()
   password: string;
-
-  @ManyToOne(() => Roles, (roles: Roles) => roles.id)
-  roles: Roles[];
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;

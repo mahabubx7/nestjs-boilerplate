@@ -1,24 +1,16 @@
 import { Module } from '@nestjs/common';
-// import { APP_GUARD } from '@nestjs/core';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { UserModule } from './modules/users/user.module';
-import { ArticleModule } from './modules/articles/article.module';
-// import { AuthService } from './modules/auth/auth.service';
 import { AuthModule } from './modules/auth/auth.module';
-import { RoleModule } from './modules/roles/role.module';
-import { PermissionModule } from './modules/permissions/permission.module';
-import { ObjectModule } from './modules/objects/object.module';
-// import configuration from './config/configuration';
+
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      // load: [configuration],
       envFilePath: ['.env', '.env.local', '.env.development'],
-      // expandVariables: true,
     }),
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
@@ -40,10 +32,6 @@ import { ObjectModule } from './modules/objects/object.module';
     }),
     UserModule,
     AuthModule,
-    ArticleModule,
-    RoleModule,
-    PermissionModule,
-    ObjectModule,
   ],
   controllers: [AppController],
   providers: [AppService],

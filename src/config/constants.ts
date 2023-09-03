@@ -22,6 +22,6 @@ export const envVars: EnvVars = {
   },
   expires: {
     cookie: new Date(Date.now() + 1000 * 3600 * 24), // default: 24h or 1d
-    jwt: process.env.JWT_EXPIRES || '1d',
+    jwt: process.env.JWT_EXPIRES || '15s',
   },
 };

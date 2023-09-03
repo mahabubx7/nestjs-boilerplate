@@ -15,13 +15,16 @@ export class UserService {
   }
 
   async login(loginDto: LoginDto) {
-    const user = await this.userRepo.findOne({ where: { email: loginDto.email } });
+    const user = await this.userRepo.findOne({
+      where: { email: loginDto.email },
+      select: ['email', 'id', 'name', 'password'],
+    });
     if (!user) {
-      throw new HttpException('User not found on this email id', HttpStatus.NOT_FOUND);
+      throw new HttpException('Wrong email or password!', HttpStatus.NOT_FOUND);
     }
     const verifiedUser = await passwordHelper.verifyPassword(loginDto.password, user.password);
     if (!verifiedUser) {
-      throw new HttpException('Invalid credentials', HttpStatus.NOT_FOUND);
+      throw new HttpException('Wrong password!', HttpStatus.NOT_FOUND);
     }
     delete user.password;
     return user;
@@ -45,9 +48,9 @@ export class UserService {
     return await this.userRepo.findOne({
       where: { id },
       select: ['id', 'email', 'name', 'createdAt', 'updatedAt'],
-      relations: {
-        roles: true,
-      },
+      // relations: {
+      //   roles: true,
+      // },
     });
   }
 }

@@ -1,8 +1,8 @@
-import { Body, Controller, Delete, Get, Post, Req, Res, UseGuards } from '@nestjs/common';
-import { Response } from 'express';
+import { Body, Controller, Delete, Post, Res, UseGuards, Request, Get, Req } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { CreateUserDto, LoginDto } from '../users/dto';
-import { JwtAuthGuard } from './auth.guard';
+import { CreateUserDto } from '../users/dto';
+import { JwtAuthGuard } from './jwt.guard';
+import { LocalAuthGuard } from './local.guard';
 import { cookieOptions } from 'src/config';
 
 @Controller('auth')
@@ -15,27 +15,25 @@ export class AuthController {
     return { message: 'Registered successfully!', data };
   }
 
+  @UseGuards(LocalAuthGuard)
   @Post('login')
-  async login(@Body() loginDto: LoginDto, @Res({ passthrough: true }) res: Response) {
-    const user = await this.authService.login(loginDto);
-    const { id, email } = user;
-    const token = await this.authService.signJwt({ id, email });
-    res.cookie('jwt_token', token, cookieOptions);
-    return { message: 'Logged-in successfully!', data: user };
+  async login(@Request() req, @Res({ passthrough: true }) res) {
+    const { accessToken, ...response } = await this.authService.login(req.user);
+    res.cookie('access_token', accessToken, cookieOptions);
+    return response;
   }
 
   @UseGuards(JwtAuthGuard)
-  @Get('profile')
+  @Get('user')
   async profile(@Req() req) {
-    const token = req.cookies['jwt_token'];
-    const data = await this.authService.verifyJwt(token);
-    return { message: 'User<Profile>', data };
+    const { user } = req;
+    return { user };
   }
 
   @UseGuards(JwtAuthGuard)
   @Delete('logout')
-  async logout(@Res({ passthrough: true }) response: Response) {
-    response.clearCookie('jwt_token');
+  async logout(@Res({ passthrough: true }) res) {
+    res.clearCookie('access_token');
     return {
       message: 'Logged-out successfully!',
     };

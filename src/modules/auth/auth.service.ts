@@ -1,9 +1,10 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { UserService } from '../users/user.service';
-import { JwtService } from '@nestjs/jwt';
+import { JwtService, JwtSignOptions } from '@nestjs/jwt';
 import { CreateUserDto, LoginDto } from '../users/dto';
 import { TokenPayload } from './types';
 import { envVars } from 'src/config';
+import { User } from '../users/entities/user.entity';
 
 @Injectable()
 export class AuthService {
@@ -18,32 +19,55 @@ export class AuthService {
       delete createdUser.password;
       return createdUser;
     } catch (err) {
-      throw new HttpException(err.message, HttpStatus.INTERNAL_SERVER_ERROR);
+      throw new HttpException(err.message, HttpStatus.NOT_ACCEPTABLE);
     }
   }
 
-  public async login(loginDto: LoginDto) {
+  public async validateUser(loginDto: LoginDto) {
     try {
       const user = await this.userService.login(loginDto);
       return user;
     } catch (err) {
-      throw new HttpException(err.message, HttpStatus.INTERNAL_SERVER_ERROR);
+      throw new HttpException(err.message, HttpStatus.BAD_REQUEST);
     }
   }
 
-  public async signJwt(payload: TokenPayload) {
-    return await this.jwtService.signAsync(payload, { secret: envVars.secret.jwt });
+  public async login(user: User) {
+    const accessToken = await this.signJwt({ sub: user.id, email: user.email }, '1h');
+    return {
+      message: 'Logged-in successfully!',
+      data: user,
+      accessToken,
+    };
+  }
+
+  public async signJwt(payload: TokenPayload, exp?: string) {
+    const jwtSignOptions: JwtSignOptions = {
+      secret: envVars.secret.jwt,
+      expiresIn: exp || envVars.expires.jwt,
+    };
+    return await this.jwtService.signAsync(payload, jwtSignOptions);
   }
 
   public async verifyJwt(token: string) {
-    const parsed = await this.jwtService.verifyAsync(token, {
+    const decoded = await this.jwtService.verifyAsync(token, {
       secret: envVars.secret.jwt,
+      // ignoreExpiration: true,
     });
 
-    if (!parsed.id || !parsed.email) {
-      throw new HttpException('Jwt data broken', HttpStatus.INTERNAL_SERVER_ERROR);
+    if (!decoded.id || !decoded.email) {
+      throw new HttpException('Jwt data broken', HttpStatus.NOT_ACCEPTABLE);
     }
-    const info = await this.userService.getUserInfo(parsed.id);
-    return info;
+
+    const info = await this.userService.getUserInfo(decoded.id);
+    return {
+      info,
+      decoded,
+    };
+  }
+
+  public checkJwtExpires(exp: number): boolean {
+    const now = Math.floor(Date.now() / 1000); // Current time in seconds
+    return now > exp;
   }
 }
