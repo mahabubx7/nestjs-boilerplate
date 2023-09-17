@@ -1,8 +1,20 @@
-import { Body, Controller, Delete, Post, Res, UseGuards, Request, Get, Req } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Post,
+  Res,
+  UseGuards,
+  Request,
+  Get,
+  Req,
+  InternalServerErrorException,
+  BadRequestException,
+} from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { CreateUserDto } from '../users/dto';
-import { JwtAuthGuard } from './jwt.guard';
-import { LocalAuthGuard } from './local.guard';
+import { JwtAuthGuard, JwtRefreshAuthGuard } from './guards';
+import { LocalAuthGuard } from './guards/local.guard';
 import { cookieOptions } from 'src/config';
 
 @Controller('auth')
@@ -18,8 +30,9 @@ export class AuthController {
   @UseGuards(LocalAuthGuard)
   @Post('login')
   async login(@Request() req, @Res({ passthrough: true }) res) {
-    const { accessToken, ...response } = await this.authService.login(req.user);
+    const { accessToken, refreshToken, ...response } = await this.authService.login(req.user);
     res.cookie('access_token', accessToken, cookieOptions);
+    res.cookie('refresh_token', refreshToken, cookieOptions);
     return response;
   }
 
@@ -28,6 +41,25 @@ export class AuthController {
   async profile(@Req() req) {
     const { user } = req;
     return { user };
+  }
+
+  @UseGuards(JwtRefreshAuthGuard)
+  @Get('refresh')
+  async refreshToken(@Req() req, @Res({ passthrough: true }) res) {
+    const { cookies } = req;
+
+    if (!cookies.refresh_token) {
+      throw new BadRequestException('Invalid token-refresh request!');
+    }
+
+    try {
+      const { accessToken, refreshToken, ...login } = await this.authService.refreshTokens(cookies.refresh_token);
+      res.cookie('access_token', accessToken, cookieOptions);
+      res.cookie('refresh_token', refreshToken, cookieOptions);
+      return { ...login };
+    } catch (err) {
+      throw new InternalServerErrorException(err);
+    }
   }
 
   @UseGuards(JwtAuthGuard)
