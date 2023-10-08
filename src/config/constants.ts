@@ -10,6 +10,13 @@ interface EnvVars {
     cookie?: Date;
     jwt?: string;
   };
+  mail?: {
+    secure?: boolean;
+    auth?: {
+      user: string;
+      pass: string;
+    };
+  };
 }
 
 export const envVars: EnvVars = {
@@ -23,5 +30,12 @@ export const envVars: EnvVars = {
   expires: {
     cookie: new Date(Date.now() + 1000 * 3600 * 24), // default: 24h or 1d
     jwt: process.env.JWT_EXPIRES || '15s',
+  },
+  mail: {
+    secure: Boolean(process.env.MAIL_AUTH_HTTPS) || false,
+    auth: {
+      user: process.env.MAIL_AUTH_USER || 'mx7.app.test@gmail.com',
+      pass: process.env.MAIL_AUTH_PASS || 'avdr pngu wszz tnoc',
+    },
   },
 };

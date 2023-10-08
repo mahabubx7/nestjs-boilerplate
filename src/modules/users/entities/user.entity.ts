@@ -20,8 +20,17 @@ export class User {
   @Column({ unique: true })
   email: string;
 
+  @Column({ default: false })
+  isEmailVerified: boolean;
+
   @Column()
   password: string;
+
+  @Column({ default: false })
+  isActive: boolean;
+
+  @Column({ nullable: true, type: 'text' })
+  confirmationCode: string;
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
