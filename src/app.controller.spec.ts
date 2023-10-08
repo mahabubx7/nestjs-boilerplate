@@ -15,8 +15,10 @@ describe('AppController', () => {
   });
 
   describe('root', () => {
-    it('should return "Hello World!"', () => {
-      expect(appController.getHello()).toBe('Hello World!');
+    it('should return the Hello Json response', () => {
+      expect(appController.getHello()).toStrictEqual({
+        message: 'Hello! from NestJs (v10) boilerplate',
+      });
     });
   });
 });
