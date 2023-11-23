@@ -14,12 +14,14 @@ import {
   Put,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { CreateUserDto } from '../users/dto';
+import { CreateUserDto, LoginDto } from '../users/dto';
 import { JwtAuthGuard, JwtRefreshAuthGuard } from './guards';
 import { LocalAuthGuard } from './guards/local.guard';
 import { cookieOptions } from 'src/config';
 import { ResendEmailDto, ResetPasswordDto } from './dto';
+import { ApiBody, ApiTags } from '@nestjs/swagger';
 
+@ApiTags('auth')
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
@@ -30,6 +32,7 @@ export class AuthController {
     return { message: 'Registered successfully!', data };
   }
 
+  @ApiBody({ type: LoginDto })
   @UseGuards(LocalAuthGuard)
   @Post('login')
   async login(@Request() req, @Res({ passthrough: true }) res) {
